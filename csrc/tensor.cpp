@@ -6,14 +6,27 @@
 #include <numeric>
 
 template <class T>
-unsigned Tensor<T>::size()
+Tensor<T>::Tensor(std::initializer_list<unsigned> shape) : shape(shape)
 {
-    return std::accumulate(this->shape.begin(), this->shape.end(), 1, std::multiplies<unsigned>());
+    data.resize(size());
+    std::fill(data.begin(), data.end(), 0);
 }
 
 template <class T>
-Tensor<T>::Tensor(std::initializer_list<unsigned> shape) : shape(shape)
+unsigned Tensor<T>::size()
 {
+    return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<unsigned>());
+}
+
+template <class T>
+Tensor<T> &Tensor<T>::operator=(const Tensor<T> &t)
+{
+    if (this != &t)
+    {
+        data = t.data;
+        shape = t.shape;
+    }
+    return *this;
 }
 
 // template <class T>
