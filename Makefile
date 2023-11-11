@@ -1,5 +1,5 @@
 CXX = g++
-INCLUDES = -I./csrc
+INCLUDES = -I./csrc -I./include
 CXXFLAGS = -Wall -std=c++11
 LIBS = 
 SRCS = $(wildcard csrc/*.cpp)
