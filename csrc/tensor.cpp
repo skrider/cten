@@ -5,6 +5,8 @@
 #include <numeric>
 #include <algorithm>
 
+// Tensor helper methods
+
 template <class T>
 Tensor<T>::Tensor(std::initializer_list<unsigned> shape__) : shape_(shape__)
 {
@@ -45,6 +47,8 @@ unsigned Tensor<T>::offset(std::initializer_list<int> index_) const
     return acc;
 }
 
+// CPU Tensor
+
 template <class T>
 CpuTensor<T>::CpuTensor(std::initializer_list<unsigned> shape__) : Tensor<T>(shape__)
 {
@@ -64,9 +68,9 @@ CpuTensor<T> &CpuTensor<T>::operator=(const CpuTensor<T> &t)
 }
 
 template <class T>
-T &CpuTensor<T>::operator()(std::initializer_list<int> index)
+void CpuTensor<T>::set(std::initializer_list<int> index, T value)
 {
-    return data[Tensor<T>::offset(index)];
+    data[Tensor<T>::offset(index)] = value;
 }
 
 template <class T>
