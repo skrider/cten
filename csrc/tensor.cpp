@@ -1,6 +1,6 @@
 #include <vector>
 #include "tensor.h"
-#include <initializer_list>
+#include <vector>
 #include <functional>
 #include <numeric>
 #include <algorithm>
@@ -8,7 +8,7 @@
 // Tensor helper methods
 
 template <class T>
-Tensor<T>::Tensor(std::initializer_list<unsigned> shape__) : shape_(shape__)
+Tensor<T>::Tensor(std::vector<unsigned> shape__) : shape_(shape__)
 {
     unsigned acc = 1;
     for (unsigned i : shape_)
@@ -34,7 +34,7 @@ unsigned Tensor<T>::shape(unsigned i) const
 }
 
 template <class T>
-unsigned Tensor<T>::offset(std::initializer_list<int> index_) const
+unsigned Tensor<T>::offset(std::vector<int> index_) const
 {
     unsigned acc = 0;
     std::vector<int> index(index_);
@@ -50,7 +50,7 @@ unsigned Tensor<T>::offset(std::initializer_list<int> index_) const
 // CPU Tensor
 
 template <class T>
-CpuTensor<T>::CpuTensor(std::initializer_list<unsigned> shape__) : Tensor<T>(shape__)
+CpuTensor<T>::CpuTensor(std::vector<unsigned> shape__) : Tensor<T>(shape__)
 {
     data.resize(Tensor<T>::size());
     std::fill(data.begin(), data.end(), 0);
@@ -68,19 +68,16 @@ CpuTensor<T> &CpuTensor<T>::operator=(const CpuTensor<T> &t)
 }
 
 template <class T>
-void CpuTensor<T>::set(std::initializer_list<int> index, T value)
+void CpuTensor<T>::set(std::vector<int> index, T value)
 {
     data[Tensor<T>::offset(index)] = value;
 }
 
 template <class T>
-T CpuTensor<T>::operator()(std::initializer_list<int> index) const
+T CpuTensor<T>::operator()(std::vector<int> index) const
 {
     return data[Tensor<T>::offset(index)];
 }
-
-// template <class T>
-// T &CpuTensor<T>::operator()(const int index...) {}
 
 template class CpuTensor<int>;
 // template class Tensor<float>;

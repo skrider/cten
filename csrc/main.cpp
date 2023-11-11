@@ -1,11 +1,14 @@
 #include <iostream>
 #include "tensor.h"
 #include "cuda_tensor.h"
+#include "cuda_utils.h"
 
 using namespace std;
 
 int main(int argc, char **argv)
 {
+    printDeviceProperties();
+
     CpuTensor<int> a({3, 4, 5});
     CpuTensor<int> b({3, 5, 5});
     cout << "a size: " << a.size() << endl;
