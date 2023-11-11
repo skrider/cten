@@ -1,6 +1,6 @@
 NVCC = nvcc
 INCLUDES = -I./csrc -I./include
-NVCCFLAGS = -dc
+NVCCFLAGS = -dc --expt-relaxed-constexpr
 LIBS = 
 CU_SRCS = $(wildcard csrc/*.cu)
 OBJS = $(patsubst csrc/%.cu,%.o,$(CU_SRCS))

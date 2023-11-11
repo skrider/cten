@@ -9,3 +9,19 @@
 //     Tensor<scalar_t, DIMS> ret(new_shape);
 //     return ret;
 // }
+
+template <typename scalar_t, unsigned DIMS>
+__global__ void Fill(Tensor<scalar_t, DIMS> t, scalar_t value)
+{
+    t(blockIdx.x * blockDim.x + threadIdx.x) = value;
+}
+
+template <typename scalar_t, unsigned DIMS>
+void Tensor<scalar_t, DIMS>::fill(scalar_t value)
+{
+    dim3 threadsPerBlock(32);
+    dim3 numBlocks(phys_size / threadsPerBlock.x);
+    Fill<<<numBlocks, threadsPerBlock>>>(*this, value);
+}
+
+template class Tensor<int, 2>;

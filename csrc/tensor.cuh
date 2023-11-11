@@ -10,7 +10,7 @@
 #define WARP_SIZE 32
 #define WARP_ROUND(size) (((size + WARP_SIZE - 1) / WARP_SIZE) * WARP_SIZE)
 
-template <typename scalar_t, int DIMS>
+template <typename scalar_t, unsigned DIMS>
 class Tensor
 {
 private:
@@ -20,7 +20,7 @@ private:
     const std::array<unsigned, DIMS> stride;
     scalar_t *data;
 
-    __device__ __host__ unsigned offset(std::array<int, DIMS> index) const
+    __device__ __host__ inline unsigned offset(std::array<int, DIMS> index) const
     {
         unsigned ret = 0;
         for (int i = 0; i < DIMS; i++)
@@ -66,14 +66,16 @@ public:
         checkCudaErrors(cudaMemset(data, 0, size * sizeof(scalar_t)));
     }
 
-    __device__ scalar_t operator()(std::array<int, DIMS> index) const
-    {
-        return data[offset(index)];
-    }
+    __device__ scalar_t operator()(std::array<int, DIMS> index) const { return data[offset(index)]; }
+    __device__ scalar_t &operator()(std::array<int, DIMS> index) { return data[offset(index)]; }
+    __device__ scalar_t operator()(int index) const { return data[index]; }
+    __device__ scalar_t &operator()(int index) { return data[index]; }
 
-    __device__ scalar_t &operator()(std::array<int, DIMS> index)
+    scalar_t get(std::array<int, DIMS> index) const
     {
-        return &data[offset(index)];
+        scalar_t ret;
+        checkCudaErrors(cudaMemcpy(&ret, data + offset(index), sizeof(scalar_t), cudaMemcpyDeviceToHost));
+        return ret;
     }
 
     template <int NEW_DIMS>
@@ -81,6 +83,8 @@ public:
     {
         return Tensor<scalar_t, NEW_DIMS>(new_shape);
     }
+
+    void fill(scalar_t value);
 };
 
 #endif // _TENSOR
