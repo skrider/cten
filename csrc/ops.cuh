@@ -1,9 +1,8 @@
-#include "tensor.h"
-#include "cuda_tensor.h"
+#include "tensor.cuh"
 
 /*
 General matrix multiply. Computes the following:
     O = alpha * AB + beta * C
 For now, assumes A, B, C are two dimensional. */
-template <class T>
-CudaTensor<T> &gemm(CudaTensor<T> a, CudaTensor<T> b, CudaTensor<T> c, T alpha, T beta);
+template <typename scalar_t>
+Tensor<scalar_t, 2> &gemm(Tensor<scalar_t, 2> a, Tensor<scalar_t, 2> b, Tensor<scalar_t, 2> c, scalar_t alpha, scalar_t beta);

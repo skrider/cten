@@ -2,17 +2,22 @@
 #include "tensor.cuh"
 #include "helper_cuda.h"
 
-template <class T>
-CudaTensor<T> &gemm(CudaTensor<T> a, CudaTensor<T> b, CudaTensor<T> c, T alpha, T beta)
+template <typename scalar_t>
+Tensor<scalar_t, 2> gemm(
+    Tensor<scalar_t, 2> a,
+    Tensor<scalar_t, 2> b,
+    Tensor<scalar_t, 2> c,
+    scalar_t alpha,
+    scalar_t beta)
 {
-    CudaTensor<T> out(c.shape());
+    Tensor<scalar_t, 2> out(c.shape());
 }
 
 // Gemm for a batch size of one at optimization level 1. Basic matrix multiply.
 // Each thread computes one element of output.
 template <typename scalar_t>
 __global__ void GemmSingle1(
-    scalar_t out,                   // [rows, cols]
+    scalar_t *out,                  // [rows, cols]
     const scalar_t *__restrict__ a, // [rows, inner]
     const scalar_t *__restrict__ b, // [inner, cols]
     const scalar_t *__restrict__ c, // [rows, cols]
