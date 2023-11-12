@@ -1,6 +1,10 @@
 #include <cuda_runtime.h>
 #include "helper_cuda.h"
 #include <array>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <sstream>
 
 #ifndef _TENSOR
 #define _TENSOR
@@ -8,7 +12,7 @@
 #define OOB_MSG "error tensor index out of bounds"
 
 #define WARP_SIZE 32
-#define WARP_ROUND(size) (((size + WARP_SIZE - 1) / WARP_SIZE) * WARP_SIZE)
+#define ROUND(a, b) (((a + b - 1) / b) * b)
 
 template <typename scalar_t, unsigned DIMS>
 class Tensor
@@ -20,7 +24,19 @@ private:
     const std::array<unsigned, DIMS> stride;
     scalar_t *data;
 
-    __device__ __host__ inline unsigned offset(std::array<int, DIMS> index) const
+public:
+    __device__ inline unsigned doffset(std::array<int, DIMS> index) const
+    {
+        unsigned ret = 0;
+        unsigned _shape[DIMS](shape);
+        unsigned _stride[DIMS](stride);
+        int _index[DIMS](index);
+        for (int i = 0; i < DIMS; i++)
+            ret += (_index[i] % _shape[i]) * _stride[i];
+        return ret;
+    }
+
+    __host__ inline unsigned offset(std::array<int, DIMS> index) const
     {
         unsigned ret = 0;
         for (int i = 0; i < DIMS; i++)
@@ -28,10 +44,11 @@ private:
         return ret;
     }
 
+private:
     std::array<unsigned, DIMS> getPhysShape(std::array<unsigned, DIMS> shape) const
     {
         std::array<unsigned, DIMS> ret(shape);
-        ret[DIMS - 1] = WARP_ROUND(shape[DIMS - 1]);
+        ret[DIMS - 1] = ROUND(shape[DIMS - 1], WARP_SIZE);
         return ret;
     }
 
@@ -66,8 +83,8 @@ public:
         checkCudaErrors(cudaMemset(data, 0, size * sizeof(scalar_t)));
     }
 
-    __device__ scalar_t operator()(std::array<int, DIMS> index) const { return data[offset(index)]; }
-    __device__ scalar_t &operator()(std::array<int, DIMS> index) { return data[offset(index)]; }
+    __device__ scalar_t operator()(std::array<int, DIMS> index) const { return data[doffset(index)]; }
+    __device__ scalar_t &operator()(std::array<int, DIMS> index) { return data[doffset(index)]; }
     __device__ scalar_t operator()(int index) const { return data[index]; }
     __device__ scalar_t &operator()(int index) { return data[index]; }
 
@@ -82,6 +99,24 @@ public:
     Tensor<scalar_t, NEW_DIMS> reshape(std::array<unsigned, NEW_DIMS> new_shape)
     {
         return Tensor<scalar_t, NEW_DIMS>(new_shape);
+    }
+
+    std::string string() const
+    {
+        std::vector<scalar_t> buf;
+        buf.resize(phys_size);
+        std::ostringstream builder;
+        checkCudaErrors(cudaMemcpy(buf.data(), data, phys_size * sizeof(scalar_t), cudaMemcpyDeviceToHost));
+        if (DIMS == 2)
+        {
+            for (int i = 0; i < shape[0]; i++)
+            {
+                for (int j = 0; j < shape[1]; j++)
+                    builder << buf[offset({i, j})] << " ";
+                builder << std::endl;
+            }
+        }
+        return builder.str();
     }
 
     void fill(scalar_t value);

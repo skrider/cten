@@ -15,7 +15,8 @@ Tensor<scalar_t, 2> gemm(
 {
     Tensor<scalar_t, 2> out(c.shape);
     dim3 threadsPerBlock(32, 32);
-    dim3 numBlocks(c.shape[0] / threadsPerBlock.x + 1, c.shape[1] / threadsPerBlock.y + 1);
+    dim3 numBlocks(ROUND(c.shape[0], threadsPerBlock.x) / threadsPerBlock.x,
+                   ROUND(c.shape[1], threadsPerBlock.y) / threadsPerBlock.y);
     GemmSingle1<<<numBlocks, threadsPerBlock>>>(out, a, b, c, alpha, beta);
     return out;
 }
@@ -36,9 +37,13 @@ __global__ void GemmSingle1(
     int col = blockIdx.y * blockDim.y + threadIdx.y;
 
     if (row >= c.shape[0] || col >= c.shape[1])
+    {
+        printf("out of bounds, returning");
         return;
+    }
 
     out({row, col}) = beta * c({row, col});
+    printf("offset: %d\n", c.offset({row, col}));
 #pragma unroll
     for (int i = 0; i < a.shape[1]; i++)
     {
