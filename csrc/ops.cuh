@@ -1,6 +1,6 @@
 #include "tensor.cuh"
 
-template <typename scalar_t, unsigned DIMS>
+template <typename scalar_t, uint DIMS>
 Tensor<scalar_t, DIMS> arange();
 
 /*

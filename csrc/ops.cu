@@ -2,7 +2,7 @@
 #include "tensor.cuh"
 #include "helper_cuda.h"
 
-template <typename scalar_t, unsigned DIMS>
+template <typename scalar_t, uint DIMS>
 Tensor<scalar_t, DIMS> arange();
 
 template <typename scalar_t>
@@ -38,16 +38,17 @@ __global__ void GemmSingle1(
 
     if (row >= c.shape[0] || col >= c.shape[1])
     {
-        printf("out of bounds, returning");
         return;
     }
 
-    out({row, col}) = beta * c({row, col});
-    printf("offset: %d\n", c.offset({row, col}));
+    int c_i[2] = {row, col};
+    out(c_i) = beta * c(c_i);
 #pragma unroll
     for (int i = 0; i < a.shape[1]; i++)
     {
-        out({row, col}) += alpha * a({row, i}) * b({i, col});
+        int a_i[2] = {row, i};
+        int b_i[2] = {i, col};
+        out(c_i) += alpha * a(a_i) * b(b_i);
     }
 }
 

@@ -5,13 +5,17 @@
 
 using namespace std;
 
+#define ROW 400
+#define COL 500
+#define INNER 1000
+
 int main(int argc, char **argv)
 {
     printDeviceProperties();
 
-    Tensor<int, 2> a({32, 32});
-    Tensor<int, 2> b({32, 32});
-    Tensor<int, 2> c({32, 32});
+    Tensor<int, 2> a({ROW, INNER});
+    Tensor<int, 2> b({INNER, COL});
+    Tensor<int, 2> c({ROW, COL});
     int alpha = 1;
     int beta = -1;
 
@@ -22,17 +26,5 @@ int main(int argc, char **argv)
     Tensor<int, 2> out = gemm(a, b, c, alpha, beta);
 
     cout << "some value of a:   " << a.get({3, 6}) << endl;
-    cout << "some value of out: " << out.get({3, 6}) << endl;
-
-    cout << "a: " << endl;
-    cout << a.string();
-
-    cout << "b: " << endl;
-    cout << b.string();
-
-    cout << "c: " << endl;
-    cout << c.string();
-
-    cout << "out: " << endl;
-    cout << out.string();
+    cout << "some value of out: " << out.get({3, 4}) << endl;
 }

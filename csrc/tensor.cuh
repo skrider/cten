@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <sstream>
+#include "utils.cuh"
 
 #ifndef _TENSOR
 #define _TENSOR
@@ -14,77 +15,62 @@
 #define WARP_SIZE 32
 #define ROUND(a, b) (((a + b - 1) / b) * b)
 
-template <typename scalar_t, unsigned DIMS>
+template <typename scalar_t, uint DIMS>
 class Tensor
 {
 private:
     // shape with rows rounded up to nearest warp dim
-    const std::array<unsigned, DIMS> phys_shape;
-    const unsigned phys_size;
-    const std::array<unsigned, DIMS> stride;
+    uint phys_shape[DIMS];
+    uint phys_size;
+    uint stride[DIMS];
     scalar_t *data;
 
 public:
-    __device__ inline unsigned doffset(std::array<int, DIMS> index) const
+    __device__ inline uint doffset(int *index) const
     {
-        unsigned ret = 0;
-        unsigned _shape[DIMS](shape);
-        unsigned _stride[DIMS](stride);
-        int _index[DIMS](index);
-        for (int i = 0; i < DIMS; i++)
-            ret += (_index[i] % _shape[i]) * _stride[i];
-        return ret;
-    }
-
-    __host__ inline unsigned offset(std::array<int, DIMS> index) const
-    {
-        unsigned ret = 0;
+        uint ret = 0;
         for (int i = 0; i < DIMS; i++)
             ret += (index[i] % shape[i]) * stride[i];
         return ret;
     }
 
-private:
-    std::array<unsigned, DIMS> getPhysShape(std::array<unsigned, DIMS> shape) const
+    __host__ inline uint offset(std::array<int, DIMS> index) const
     {
-        std::array<unsigned, DIMS> ret(shape);
-        ret[DIMS - 1] = ROUND(shape[DIMS - 1], WARP_SIZE);
-        return ret;
-    }
-
-    std::array<unsigned, DIMS> getStride(std::array<unsigned, DIMS> shape) const
-    {
-        std::array<unsigned, DIMS> phys_shape = getPhysShape(shape);
-        std::array<unsigned, DIMS> ret;
-        ret[DIMS - 1] = 1;
-        for (int i = DIMS - 1; i > 0; i--)
-            ret[i - 1] = ret[i] * phys_shape[i];
-        return ret;
-    }
-
-    unsigned getSize(std::array<unsigned, DIMS> shape) const
-    {
-        unsigned ret = 1;
+        uint ret = 0;
         for (int i = 0; i < DIMS; i++)
-            ret *= shape[i];
+            ret += (index[i] % shape[i]) * stride[i];
         return ret;
     }
 
-public:
-    const std::array<unsigned, DIMS> shape;
-    const unsigned size;
+    uint shape[DIMS];
+    uint size;
 
-    Tensor(std::array<unsigned, DIMS> _shape)
-        : shape(_shape), phys_shape(getPhysShape(_shape)),
-          stride(getStride(_shape)), size(getSize(_shape)),
-          phys_size(getSize(getPhysShape(_shape)))
+    Tensor(std::array<uint, DIMS> _shape)
     {
+        for (int i = 0; i < DIMS; i++)
+            phys_shape[i] = shape[i] = _shape[i];
+        phys_shape[DIMS - 1] = ROUND(shape[DIMS - 1], WARP_SIZE);
+
+        size = 1;
+        phys_size = 1;
+        for (int i = 0; i < DIMS; i++)
+        {
+            phys_size *= phys_shape[i];
+            size *= shape[i];
+        }
+
+        stride[DIMS - 1] = 1;
+        for (int i = DIMS - 1; i > 0; i--)
+            stride[i - 1] = stride[i] * phys_shape[i];
+
         checkCudaErrors(cudaMalloc(&data, size * sizeof(scalar_t)));
         checkCudaErrors(cudaMemset(data, 0, size * sizeof(scalar_t)));
     }
 
-    __device__ scalar_t operator()(std::array<int, DIMS> index) const { return data[doffset(index)]; }
-    __device__ scalar_t &operator()(std::array<int, DIMS> index) { return data[doffset(index)]; }
+    Tensor(uint _shape[DIMS]) : Tensor(packCArr<uint, DIMS>(_shape)) {}
+
+    __device__ scalar_t operator()(int *index) const { return data[doffset(index)]; }
+    __device__ scalar_t &operator()(int *index) { return data[doffset(index)]; }
     __device__ scalar_t operator()(int index) const { return data[index]; }
     __device__ scalar_t &operator()(int index) { return data[index]; }
 
@@ -96,7 +82,7 @@ public:
     }
 
     template <int NEW_DIMS>
-    Tensor<scalar_t, NEW_DIMS> reshape(std::array<unsigned, NEW_DIMS> new_shape)
+    Tensor<scalar_t, NEW_DIMS> reshape(std::array<uint, NEW_DIMS> new_shape)
     {
         return Tensor<scalar_t, NEW_DIMS>(new_shape);
     }
