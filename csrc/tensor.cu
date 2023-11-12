@@ -20,7 +20,7 @@ template <typename scalar_t, uint DIMS>
 void Tensor<scalar_t, DIMS>::fill(scalar_t value)
 {
     dim3 threadsPerBlock(32);
-    dim3 numBlocks(phys_size / threadsPerBlock.x);
+    dim3 numBlocks(size / threadsPerBlock.x);
     Fill<<<numBlocks, threadsPerBlock>>>(*this, value);
 }
 

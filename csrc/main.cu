@@ -5,9 +5,9 @@
 
 using namespace std;
 
-#define ROW 400
-#define COL 500
-#define INNER 1000
+#define ROW 32 * 32
+#define COL 32 * 32
+#define INNER 32 * 32
 
 int main(int argc, char **argv)
 {

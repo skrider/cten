@@ -20,8 +20,6 @@ class Tensor
 {
 private:
     // shape with rows rounded up to nearest warp dim
-    uint phys_shape[DIMS];
-    uint phys_size;
     uint stride[DIMS];
     scalar_t *data;
 
@@ -48,20 +46,21 @@ public:
     Tensor(std::array<uint, DIMS> _shape)
     {
         for (int i = 0; i < DIMS; i++)
-            phys_shape[i] = shape[i] = _shape[i];
-        phys_shape[DIMS - 1] = ROUND(shape[DIMS - 1], WARP_SIZE);
+        {
+            if (_shape[i] % WARP_SIZE != 0)
+                throw std::runtime_error("shape must be a multiple of 32");
+            shape[i] = _shape[i];
+        }
 
         size = 1;
-        phys_size = 1;
         for (int i = 0; i < DIMS; i++)
         {
-            phys_size *= phys_shape[i];
             size *= shape[i];
         }
 
         stride[DIMS - 1] = 1;
         for (int i = DIMS - 1; i > 0; i--)
-            stride[i - 1] = stride[i] * phys_shape[i];
+            stride[i - 1] = stride[i] * shape[i];
 
         checkCudaErrors(cudaMalloc(&data, size * sizeof(scalar_t)));
         checkCudaErrors(cudaMemset(data, 0, size * sizeof(scalar_t)));
@@ -90,9 +89,9 @@ public:
     std::string string() const
     {
         std::vector<scalar_t> buf;
-        buf.resize(phys_size);
+        buf.resize(size);
         std::ostringstream builder;
-        checkCudaErrors(cudaMemcpy(buf.data(), data, phys_size * sizeof(scalar_t), cudaMemcpyDeviceToHost));
+        checkCudaErrors(cudaMemcpy(buf.data(), data, size * sizeof(scalar_t), cudaMemcpyDeviceToHost));
         if (DIMS == 2)
         {
             for (int i = 0; i < shape[0]; i++)
