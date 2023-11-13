@@ -155,8 +155,8 @@ __global__ void GemmSingle3(
     const scalar_t alpha,
     const scalar_t beta)
 {
-    static __shared__ scalar_t b_t_block[BLOCK_SIZE][BLOCK_SIZE];
-    static __shared__ scalar_t a_block[BLOCK_SIZE][BLOCK_SIZE];
+    static __shared__ scalar_t b_block[BLOCK_SIZE][BLOCK_SIZE];
+    static __shared__ scalar_t a_t_block[BLOCK_SIZE][BLOCK_SIZE];
 
     int c_i[2] = {blockDim.y * blockIdx.y + threadIdx.y,
                   blockDim.x * blockIdx.x + threadIdx.x};
@@ -168,12 +168,12 @@ __global__ void GemmSingle3(
         // fetch block of b
         int b_i[2] = {ii + threadIdx.y,
                       blockDim.x * blockIdx.x + threadIdx.x};
-        b_t_block[threadIdx.x][threadIdx.y] = b(b_i);
+        b_block[threadIdx.y][threadIdx.x] = b(b_i);
 
         // fetch block of a
         int a_i[2] = {blockDim.y * blockIdx.y + threadIdx.y,
                       ii + threadIdx.x};
-        a_block[threadIdx.x][threadIdx.y] = a(a_i);
+        a_t_block[threadIdx.x][threadIdx.y] = a(a_i);
 
         // init accumulator
         __syncthreads();
@@ -181,7 +181,7 @@ __global__ void GemmSingle3(
 #pragma unroll
         for (int i = 0; i < BLOCK_SIZE; i++)
             // use i as the first index to fetch entire line at once
-            acc += a_block[i][threadIdx.y] * b_t_block[i][threadIdx.x];
+            acc += a_t_block[i][threadIdx.y] * b_block[i][threadIdx.x];
     }
     out(c_i) = alpha * acc;
 }
