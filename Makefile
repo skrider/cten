@@ -7,7 +7,7 @@ OBJS = $(patsubst csrc/%.cu,%.o,$(CU_SRCS))
 PTX = $(patsubst csrc/%.cu,%.ptx,$(CU_SRCS))
 MAIN = main
 
-.PHONY: depend clean
+.PHONY: depend clean format
 
 $(MAIN): $(OBJS)
 	$(NVCC) $(INCLUDES) -o $(MAIN) $(OBJS) $(LIBS)
@@ -24,6 +24,9 @@ ptx: $(OBJS)
 
 clean:
 	$(RM) *.o *.ptx *~ $(MAIN)
+
+format:
+	find csrc -type f | xargs clang-format -i
 
 depend: $(CU_SRCS)
 	$(NVCC) -M $(INCLUDES) $(CU_SRCS) >> ./Makefile.dep
