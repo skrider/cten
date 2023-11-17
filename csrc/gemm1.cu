@@ -2,10 +2,9 @@
 #include "helper_cuda.h"
 #include "tensor.cuh"
 
-template <typename scalar_t>
-void gemm1(Tensor<scalar_t, 2> out, Tensor<scalar_t, 2> a,
-           Tensor<scalar_t, 2> b, Tensor<scalar_t, 2> c, scalar_t alpha,
-           scalar_t beta) {
+template <typename T>
+void gemm1(Tensor<T, 2> out, Tensor<T, 2> a, Tensor<T, 2> b, Tensor<T, 2> c,
+           T alpha, T beta) {
   out.fill(0);
   dim3 threadsPerBlock(32, 32);
   dim3 numBlocks(ROUND(c.shape[0], threadsPerBlock.x) / threadsPerBlock.x,
@@ -15,12 +14,12 @@ void gemm1(Tensor<scalar_t, 2> out, Tensor<scalar_t, 2> a,
 
 // Gemm for a batch size of one at optimization level 1. Basic matrix multiply.
 // Each thread computes one element of output.
-template <typename scalar_t>
-__global__ void Gemm1(Tensor<scalar_t, 2> out,     // [rows, cols]
-                      const Tensor<scalar_t, 2> a, // [rows, inner]
-                      const Tensor<scalar_t, 2> b, // [inner, cols]
-                      const Tensor<scalar_t, 2> c, // [rows, inner]
-                      const scalar_t alpha, const scalar_t beta) {
+template <typename T>
+__global__ void Gemm1(Tensor<T, 2> out,     // [rows, cols]
+                      const Tensor<T, 2> a, // [rows, inner]
+                      const Tensor<T, 2> b, // [inner, cols]
+                      const Tensor<T, 2> c, // [rows, inner]
+                      const T alpha, const T beta) {
   // offset of the out element from beginning of the array
   int col = blockIdx.x * blockDim.x + threadIdx.x;
   int row = blockIdx.y * blockDim.y + threadIdx.y;
