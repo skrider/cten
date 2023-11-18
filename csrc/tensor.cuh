@@ -15,10 +15,13 @@
 #define WARP_SIZE 32
 #define ROUND(a, b) (((a + b - 1) / b) * b)
 
+template <uint D> using shape_t = uint[D];
+template <uint D> using index_t = int[D];
+
 template <typename T, uint D> class Tensor {
 private:
   // shape with rows rounded up to nearest warp dim
-  uint stride[D];
+  shape_t<D> stride;
   T *data;
 
 public:
@@ -36,7 +39,7 @@ public:
     return ret;
   }
 
-  uint shape[D];
+  shape_t<D> shape;
   uint size;
 
   Tensor(std::array<uint, D> _shape) {
@@ -59,7 +62,7 @@ public:
     checkCudaErrors(cudaMemset(data, 0, size * sizeof(T)));
   }
 
-  Tensor(uint _shape[D]) : Tensor(packCArr<uint, D>(_shape)) {}
+  Tensor(shape_t<D> _shape) : Tensor(packCArr<uint, D>(_shape)) {}
 
   __device__ T operator()(int *index) const { return data[doffset(index)]; }
   __device__ T &operator()(int *index) { return data[doffset(index)]; }
@@ -73,8 +76,7 @@ public:
     return ret;
   }
 
-  template <int NEW_D>
-  Tensor<T, NEW_D> reshape(std::array<uint, NEW_D> new_shape) {
+  template <int NEW_D> Tensor<T, NEW_D> reshape(shape_t<NEW_D> new_shape) {
     return Tensor<T, NEW_D>(new_shape);
   }
 
