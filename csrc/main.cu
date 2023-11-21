@@ -2,6 +2,7 @@
 #include "helper_cuda.h"
 #include "rand.cuh"
 #include "tensor.cuh"
+#include "tensor_utils.cuh"
 #include "utils.cuh"
 #include <chrono>
 #include <cuda_runtime.h>
@@ -9,9 +10,9 @@
 
 using namespace std;
 
-#define ROW (1 << 12)
-#define COL (1 << 12)
-#define INNER (1 << 12)
+#define ROW (1 << 6)
+#define COL (1 << 6)
+#define INNER (1 << 6)
 
 #define WARMUP 1
 #define N 1
@@ -21,6 +22,7 @@ int main(int argc, char **argv) {
   Tensor<float, 2> b({INNER, COL});
   Tensor<float, 2> c({ROW, COL});
   Tensor<float, 2> out({ROW, COL});
+  Tensor<float, 2> out1({ROW, COL});
   float alpha = 1.0f;
   float beta = -1.0f;
 
@@ -38,12 +40,19 @@ int main(int argc, char **argv) {
     checkCudaErrors(cudaDeviceSynchronize());
   }
 
-  cout << "element:      " << out.get({30, 31}) << endl;
-
   for (int i = 0; i < N; i++) {
-    gemm3(out, a, b, c, alpha, beta);
+    gemm3(out1, a, b, c, alpha, beta);
     checkCudaErrors(cudaDeviceSynchronize());
   }
 
-  cout << "element:      " << out.get({30, 31}) << endl;
+  cout << "pass: " << allclose(out1, out, (float)1e-5) << endl;
+  cout << "max: " << out1.max() << endl;
+
+  std::array<int, 2> argmax = out1.argmax();
+  cout << "out1[argmax]: " << out1.get(argmax) << endl;
+
+  cout << "min: " << out1.min() << endl;
+
+  std::array<int, 2> argmin = out1.argmin();
+  cout << "out1[argmin]: " << out1.get(argmin) << endl;
 }

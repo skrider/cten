@@ -24,6 +24,15 @@ private:
   shape_t<D> stride;
   T *data;
 
+  std::array<int, D> indexof(int offset) const {
+    std::array<int, D> ret;
+    for (int i = 0; i < D; i++) {
+      ret[i] = offset / stride[i];
+      offset -= ret[i] * stride[i];
+    }
+    return ret;
+  }
+
 public:
   __device__ inline uint doffset(int *index) const {
     uint ret = 0;
@@ -97,6 +106,14 @@ public:
   }
 
   void fill(T value);
+  T max() const;
+  T min() const;
+  std::array<int, D> argmax() const;
+  std::array<int, D> argmin() const;
+  Tensor<T, D> operator-(const Tensor<T, D> &other) const;
+  Tensor<T, D> operator-(const T scalar) const;
+  Tensor<T, D> operator+(const Tensor<T, D> &other) const;
+  Tensor<T, D> operator+(const T scalar) const;
 };
 
 #endif // _TENSOR
