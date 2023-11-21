@@ -29,19 +29,19 @@ int main(int argc, char **argv) {
   randn(c, 0.0, 1.0, 42);
 
   for (int i = 0; i < WARMUP; i++) {
-    gemm1(out, a, b, c, alpha, beta);
     gemm2(out, a, b, c, alpha, beta);
+    gemm3(out, a, b, c, alpha, beta);
   }
 
   for (int i = 0; i < N; i++) {
-    gemm1(out, a, b, c, alpha, beta);
+    gemm2(out, a, b, c, alpha, beta);
     checkCudaErrors(cudaDeviceSynchronize());
   }
 
   cout << "element:      " << out.get({30, 31}) << endl;
 
   for (int i = 0; i < N; i++) {
-    gemm2(out, a, b, c, alpha, beta);
+    gemm3(out, a, b, c, alpha, beta);
     checkCudaErrors(cudaDeviceSynchronize());
   }
 
