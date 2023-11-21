@@ -38,12 +38,12 @@ int main(int argc, char **argv) {
     checkCudaErrors(cudaDeviceSynchronize());
   }
 
-  cout << "element:      " << out.get({31, 30}) << endl;
+  cout << "element:      " << out.get({30, 31}) << endl;
 
   for (int i = 0; i < N; i++) {
     gemm2(out, a, b, c, alpha, beta);
     checkCudaErrors(cudaDeviceSynchronize());
   }
 
-  cout << "element:      " << out.get({31, 31}) << endl;
+  cout << "element:      " << out.get({30, 31}) << endl;
 }
