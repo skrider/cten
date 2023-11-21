@@ -90,7 +90,7 @@ public:
       for (int i = 0; i < shape[0]; i++) {
         for (int j = 0; j < shape[1]; j++)
           builder << buf[offset({i, j})] << " ";
-        builder << std::endl;
+        builder << '\n';
       }
     }
     return builder.str();

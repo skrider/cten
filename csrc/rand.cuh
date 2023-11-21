@@ -1,3 +1,7 @@
 #include "tensor.cuh"
 
-template <uint D> Tensor<float, D> randn(float shift, float scale);
+template <uint D>
+Tensor<float, D> randn(shape_t<D> shape, float shift, float scale, long seed);
+
+template <uint D>
+void randn(Tensor<float, D> t, float shift, float scale, long seed);

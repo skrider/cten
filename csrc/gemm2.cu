@@ -47,3 +47,7 @@ __global__ void Gemm2(Tensor<T, 2> out,     // [rows, cols]
 
 template void gemm2(Tensor<int, 2> out, Tensor<int, 2> a, Tensor<int, 2> b,
                     Tensor<int, 2> c, int alpha, int beta);
+
+template void gemm2(Tensor<float, 2> out, Tensor<float, 2> a,
+                    Tensor<float, 2> b, Tensor<float, 2> c, float alpha,
+                    float beta);

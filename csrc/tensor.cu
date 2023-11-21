@@ -22,3 +22,4 @@ template <typename T, uint D> void Tensor<T, D>::fill(T value) {
 }
 
 template class Tensor<int, 2>;
+template class Tensor<float, 2>;
