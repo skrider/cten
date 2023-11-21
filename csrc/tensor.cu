@@ -1,4 +1,5 @@
 #include "tensor.cuh"
+#include "utils.cuh"
 #include <cuda_runtime.h>
 
 template <typename T, uint D>
@@ -124,6 +125,62 @@ template <typename T, uint D> std::array<int, D> Tensor<T, D>::argmin() const {
   checkCudaErrors(cudaFree(argmin));
 
   return indexof(argmin_host);
+}
+
+/*
+MODE: 0 for addition, 1 for subtraction
+*/
+template <typename T, uint D, uint MODE>
+__global__ void elementwise_kernel(Tensor<T, D> out, const Tensor<T, D> a,
+                                   const Tensor<T, D> b) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (idx < a.size)
+    if (MODE == 0) {
+      out(idx) = a(idx) + b(idx);
+    } else if (MODE == 1) {
+      out(idx) = a(idx) - b(idx);
+    }
+}
+
+/*
+MODE: 0 for addition, 1 for subtraction
+*/
+template <typename T, uint D, uint MODE>
+__global__ void scalar_elementwise_kernel(Tensor<T, D> out,
+                                          const Tensor<T, D> a, T scalar) {
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (idx < a.size)
+    if (MODE == 0) {
+      out(idx) = a(idx) + scalar;
+    } else if (MODE == 1) {
+      out(idx) = a(idx) - scalar;
+    }
+}
+
+template <typename T, uint D>
+Tensor<T, D> Tensor<T, D>::operator-(const Tensor<T, D> &other) const {
+  Tensor<T, D> out(packCArr<uint, D>((uint *)shape));
+  elementwise_kernel<T, D, 1><<<size / 1024, 1024>>>(out, *this, other);
+  return out;
+}
+template <typename T, uint D>
+Tensor<T, D> Tensor<T, D>::operator-(const T scalar) const {
+  Tensor<T, D> out(packCArr<uint, D>((uint *)shape));
+  scalar_elementwise_kernel<T, D, 1><<<size / 1024, 1024>>>(out, *this, scalar);
+  return out;
+}
+
+template <typename T, uint D>
+Tensor<T, D> Tensor<T, D>::operator+(const Tensor<T, D> &other) const {
+  Tensor<T, D> out(packCArr<uint, D>((uint *)shape));
+  elementwise_kernel<T, D, 0><<<size / 1024, 1024>>>(out, *this, other);
+  return out;
+}
+template <typename T, uint D>
+Tensor<T, D> Tensor<T, D>::operator+(const T scalar) const {
+  Tensor<T, D> out(packCArr<uint, D>((uint *)shape));
+  scalar_elementwise_kernel<T, D, 0><<<size / 1024, 1024>>>(out, *this, scalar);
+  return out;
 }
 
 template class Tensor<int, 2>;

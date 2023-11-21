@@ -27,8 +27,8 @@ int main(int argc, char **argv) {
   float beta = -1.0f;
 
   randn(a, 0.0, 1.0, 42);
-  randn(b, 0.0, 1.0, 42);
-  randn(c, 0.0, 1.0, 42);
+  randn(b, 0.0, 1.0, 43);
+  randn(c, 0.0, 1.0, 44);
 
   for (int i = 0; i < WARMUP; i++) {
     gemm2(out, a, b, c, alpha, beta);
@@ -46,13 +46,7 @@ int main(int argc, char **argv) {
   }
 
   cout << "pass: " << allclose(out1, out, (float)1e-5) << endl;
-  cout << "max: " << out1.max() << endl;
 
-  std::array<int, 2> argmax = out1.argmax();
-  cout << "out1[argmax]: " << out1.get(argmax) << endl;
-
-  cout << "min: " << out1.min() << endl;
-
-  std::array<int, 2> argmin = out1.argmin();
-  cout << "out1[argmin]: " << out1.get(argmin) << endl;
+  Tensor<float, 2> d = out - out1;
+  cout << d.string();
 }
