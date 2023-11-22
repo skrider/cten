@@ -27,15 +27,13 @@ __global__ void Gemm3(Tensor<T, 2> out,     // [rows, cols]
          c_col_offset += warpSize) {
       int c_i[2] = {tile_row + c_row_offset + wid,
                     tile_col + c_col_offset + lane};
-      for (int i = 0; i < BLOCK_SIZE; i++) {
-        // use i as the first index to fetch entire line at once
-        out(c_i) = beta * c(c_i);
-      }
+      out(c_i) = beta * c(c_i);
     }
   }
 
-  for (int tile_inner = 0; tile_inner < a.shape[1]; tile_inner += BLOCK_SIZE) {
+  __syncthreads();
 
+  for (int tile_inner = 0; tile_inner < a.shape[1]; tile_inner += BLOCK_SIZE) {
     // warp fetch row of b and transpose to shared mem
     for (int b_row_offset = 0; b_row_offset < BLOCK_SIZE;
          b_row_offset += N_WARPS) {
@@ -77,6 +75,9 @@ __global__ void Gemm3(Tensor<T, 2> out,     // [rows, cols]
         out(c_i) += alpha * acc;
       }
     }
+
+    // wait to replace smem
+    __syncthreads();
   }
 }
 
