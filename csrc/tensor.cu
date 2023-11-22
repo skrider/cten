@@ -143,7 +143,7 @@ __global__ void elementwise_kernel(Tensor<T, D> out, const Tensor<T, D> a,
 }
 
 /*
-MODE: 0 for addition, 1 for subtraction
+MODE: 0 for addition, 1 for subtraction, 2 for round to nearest
 */
 template <typename T, uint D, uint MODE>
 __global__ void scalar_elementwise_kernel(Tensor<T, D> out,
@@ -154,6 +154,8 @@ __global__ void scalar_elementwise_kernel(Tensor<T, D> out,
       out(idx) = a(idx) + scalar;
     } else if (MODE == 1) {
       out(idx) = a(idx) - scalar;
+    } else if (MODE == 2) {
+      out(idx) = roundf(a(idx) / scalar) * scalar;
     }
 }
 
@@ -180,6 +182,12 @@ template <typename T, uint D>
 Tensor<T, D> Tensor<T, D>::operator+(const T scalar) const {
   Tensor<T, D> out(packCArr<uint, D>((uint *)shape));
   scalar_elementwise_kernel<T, D, 0><<<size / 1024, 1024>>>(out, *this, scalar);
+  return out;
+}
+template <typename T, uint D>
+Tensor<T, D> Tensor<T, D>::round(const T scalar) const {
+  Tensor<T, D> out(packCArr<uint, D>((uint *)shape));
+  scalar_elementwise_kernel<T, D, 2><<<size / 1024, 1024>>>(out, *this, scalar);
   return out;
 }
 

@@ -114,6 +114,7 @@ public:
   Tensor<T, D> operator-(const T scalar) const;
   Tensor<T, D> operator+(const Tensor<T, D> &other) const;
   Tensor<T, D> operator+(const T scalar) const;
+  Tensor<T, D> round(const T scalar) const;
 };
 
 #endif // _TENSOR
