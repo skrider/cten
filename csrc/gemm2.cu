@@ -23,7 +23,7 @@ __global__ void Gemm2(Tensor<T, 2> out,     // [rows, cols]
   int c_i[2] = {blockDim.y * blockIdx.y + threadIdx.y,
                 blockDim.x * blockIdx.x + threadIdx.x};
 
-  T acc = beta * c(c_i);
+  T acc = 0;
 
   for (int ii = 0; ii < a.shape[1]; ii += BLOCK_SIZE) {
     // fetch block of b
@@ -41,8 +41,10 @@ __global__ void Gemm2(Tensor<T, 2> out,     // [rows, cols]
     for (int i = 0; i < BLOCK_SIZE; i++)
       // use i as the first index to fetch entire line at once
       acc += a_t_block[i][threadIdx.y] * b_block[i][threadIdx.x];
+
+    __syncthreads();
   }
-  out(c_i) = alpha * acc;
+  out(c_i) = alpha * acc + beta * c(c_i);
 }
 
 template void gemm2(Tensor<int, 2> out, Tensor<int, 2> a, Tensor<int, 2> b,
