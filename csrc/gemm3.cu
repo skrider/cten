@@ -21,8 +21,10 @@ __global__ void Gemm3(Tensor<T, 2> out,     // [rows, cols]
   int c_i[2] = {BLOCK_SIZE * blockIdx.y + wid, BLOCK_SIZE * blockIdx.x + lane};
 
   // init accumulators
+#pragma unroll
   for (int c_row_offset = 0; c_row_offset < BLOCK_SIZE;
        c_row_offset += N_WARPS) {
+#pragma unroll
     for (int c_col_offset = 0; c_col_offset < BLOCK_SIZE;
          c_col_offset += warpSize) {
       int c_i[2] = {tile_row + c_row_offset + wid,
@@ -31,12 +33,12 @@ __global__ void Gemm3(Tensor<T, 2> out,     // [rows, cols]
     }
   }
 
-  __syncthreads();
-
   for (int tile_inner = 0; tile_inner < a.shape[1]; tile_inner += BLOCK_SIZE) {
     // warp fetch row of b and transpose to shared mem
+#pragma unroll
     for (int b_row_offset = 0; b_row_offset < BLOCK_SIZE;
          b_row_offset += N_WARPS) {
+#pragma unroll
       for (int b_col_offset = 0; b_col_offset < BLOCK_SIZE;
            b_col_offset += warpSize) {
         // important to always have lane in the last dimension
@@ -47,8 +49,10 @@ __global__ void Gemm3(Tensor<T, 2> out,     // [rows, cols]
     }
 
     // warp fetch row of a into shared mem
+#pragma unroll
     for (int a_row_offset = 0; a_row_offset < BLOCK_SIZE;
          a_row_offset += N_WARPS) {
+#pragma unroll
       for (int a_col_offset = 0; a_col_offset < BLOCK_SIZE;
            a_col_offset += warpSize) {
         int a_i[2] = {tile_row + a_row_offset + wid,
@@ -61,14 +65,17 @@ __global__ void Gemm3(Tensor<T, 2> out,     // [rows, cols]
     __syncthreads();
 
     // compute inner product
+#pragma unroll
     for (int c_row_offset = 0; c_row_offset < BLOCK_SIZE;
          c_row_offset += N_WARPS) {
+#pragma unroll
       for (int c_col_offset = 0; c_col_offset < BLOCK_SIZE;
            c_col_offset += warpSize) {
         int c_i[2] = {tile_row + c_row_offset + wid,
                       tile_col + c_col_offset + lane};
         T acc = 0;
         // use i as the first index to fetch entire line at once
+#pragma unroll
         for (int i = 0; i < BLOCK_SIZE; i++)
           acc +=
               a_t_tile[i][c_row_offset + wid] * b_tile[i][c_col_offset + lane];
@@ -85,9 +92,12 @@ template <typename T>
 void gemm3(Tensor<T, 2> out, Tensor<T, 2> a, Tensor<T, 2> b, Tensor<T, 2> c,
            T alpha, T beta) {
   out.fill(0);
-  dim3 threadsPerBlock(WARP_SIZE * 4);
-  dim3 numBlocks(c.shape[0] / WARP_SIZE, c.shape[1] / WARP_SIZE);
-  Gemm3<T, 32, WARP_SIZE * 4>
+  constexpr int BLOCK_SIZE = 64;
+  // occupy a full SM
+  constexpr int NUM_THREADS = 256;
+  dim3 threadsPerBlock(NUM_THREADS);
+  dim3 numBlocks(c.shape[0] / BLOCK_SIZE, c.shape[1] / BLOCK_SIZE);
+  Gemm3<T, BLOCK_SIZE, NUM_THREADS>
       <<<numBlocks, threadsPerBlock>>>(out, a, b, c, alpha, beta);
 }
 
