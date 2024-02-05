@@ -3,3 +3,4 @@ main
 Makefile.dep
 *.ptx
 /vendor
+.vscode/settings.json
