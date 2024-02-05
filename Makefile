@@ -1,5 +1,5 @@
 NVCC = nvcc
-INCLUDES = -I./csrc -I./include
+INCLUDES = -I./csrc -I./include -I./vendor/cutlass/include
 NVCCFLAGS = -dc --expt-relaxed-constexpr -g -Xptxas -v
 LIBS = 
 CU_SRCS = $(wildcard csrc/*.cu)

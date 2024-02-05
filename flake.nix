@@ -16,8 +16,10 @@
             config.allowUnfree = true;
         };
         updateVendor = pkgs.writeShellScriptBin "update-vendor" ''
-        mkdir -p vendor
+        rm -rf vendor
+        mkdir -p vendor/cuda
         ln -s ${inputs.cutlass} vendor/cutlass
+        ln -s ${pkgs.cudaPackages_12_3.cudatoolkit}/include vendor/cuda/include
         '';
     in {
         devShells.${system}.default = pkgs.mkShell {
