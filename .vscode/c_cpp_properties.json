@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/vendor/cuda/include",
-                "${workspaceFolder}/vendor/cutlass/include"
+                "${workspaceFolder}/vendor/cutlass/include",
+                "${workspaceFolder}/vendor/cuda_samples/Common"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

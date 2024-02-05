@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "cuda-samples": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1698086689,
+        "narHash": "sha256-fjVp0G6uRCWxsfe+gOwWTN+esZfk0O5uxS623u0REAk=",
+        "owner": "NVIDIA",
+        "repo": "cuda-samples",
+        "rev": "b5c84e699635946cfd4cf53fae2933f98ca2a077",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NVIDIA",
+        "ref": "v12.3",
+        "repo": "cuda-samples",
+        "type": "github"
+      }
+    },
     "cutlass": {
       "flake": false,
       "locked": {
@@ -53,6 +70,7 @@
     },
     "root": {
       "inputs": {
+        "cuda-samples": "cuda-samples",
         "cutlass": "cutlass",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs"

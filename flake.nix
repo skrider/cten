@@ -7,6 +7,10 @@
             url = "github:NVIDIA/cutlass/v3.4.0";
             flake = false;
         };
+        cuda-samples = {
+            url = "github:NVIDIA/cuda-samples/v12.3";
+            flake = false;
+        };
     };
     outputs = inputs:
     let 
@@ -20,6 +24,7 @@
         mkdir -p vendor/cuda
         ln -s ${inputs.cutlass} vendor/cutlass
         ln -s ${pkgs.cudaPackages_12_3.cudatoolkit}/include vendor/cuda/include
+        ln -s ${inputs.cuda-samples} vendor/cuda_samples
         '';
     in {
         devShells.${system}.default = pkgs.mkShell {
