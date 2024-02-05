@@ -1,61 +1,55 @@
-#include "gemm.cuh"
 #include "helper_cuda.h"
-#include "rand.cuh"
-#include "tensor.cuh"
-#include "tensor_utils.cuh"
-#include "utils.cuh"
 #include <chrono>
 #include <cuda_runtime.h>
+#include <cute/layout.hpp>
+#include <cute/tensor.hpp>
+#include <cutlass/gemm/kernel/sparse_gemm.h>
 #include <iostream>
 
-using namespace std;
+using namespace cute;
 
-#define ROW (1 << 12)
-#define COL (1 << 12)
-#define INNER (1 << 12)
+// number of queries
+constexpr int M = (1 << 11);
+using _M = Int<M>;
+// number of keys
+constexpr int N = (1 << 11);
+using _N = Int<N>;
+// head dim
+constexpr int K = (1 << 9);
+using _K = Int<K>;
 
-#define WARMUP 2
-#define N 10
+// page size
+constexpr int PageSize = 16;
+constexpr int PageCount = N / PageSize;
+static_assert(N % PageSize == 0, "N must be divisible by PageSize");
+
+// page table - some permutation of 0..PageCount
+using ElementPT = int32_t;
+
+// query
+using ElementQ = cutlass::half_t;
+using LayoutQ = Layout<Shape<_M, _K>>;
+constexpr int AlignmentA = 128 / cutlass::sizeof_bits<ElementQ>::value;
+
+// key
+using ElementK = cutlass::half_t;
+using LayoutK = Layout<Shape<_N, _K>>;
+constexpr int AlignmentB = 128 / cutlass::sizeof_bits<ElementK>::value;
 
 int main(int argc, char **argv) {
-  int seed = atoi(argv[0]);
+  Tensor gQ_h = make_tensor<ElementQ>(LayoutQ{});
+  Tensor gK_h = make_tensor<ElementK>(LayoutK{});
 
-  Tensor<float, 2> a({ROW, INNER});
-  Tensor<float, 2> b({INNER, COL});
-  Tensor<float, 2> c({ROW, COL});
-  Tensor<float, 2> out({ROW, COL});
-  Tensor<float, 2> out1({ROW, COL});
-  float alpha = 1.0f;
-  float beta = -1.0f;
+  Tensor gQ_h_permute = make_tensor<ElementQ>(LayoutQ{});
+}
 
-  randn(a, 0.0, 1.0, 42);
-  randn(b, 0.0, 1.0, 43);
-  randn(c, 0.0, 1.0, 44);
+template <typename Element, typename Layout, int PageSize> __global__ void permute_kernel(__restrict__ Element *A, __restrict__ Element *A_permute, __restrict__ ElementPT *pt) {}
 
-  for (int i = 0; i < WARMUP; i++) {
-    gemm2(out, a, b, c, alpha, beta);
-    gemm3(out, a, b, c, alpha, beta);
-  }
+template <typename Element, typename Layout, int PageSize> __device__ __forceinline__ void permute_one_page(__restrict__ Element *A, __restrict__ Element *A_permute, ElementPT from, ElementPT to) {
+  Tensor gA = make_tensor<Element>(make_gmem_ptr(A), Layout{});
+  Tensor gA_permute = make_tensor<Element>(make_gmem_ptr(A_permute), Layout{});
 
-  for (int i = 0; i < N; i++) {
-    gemm2(out, a, b, c, alpha, beta);
-    checkCudaErrors(cudaDeviceSynchronize());
-  }
+  tensor rA_page = make_fragment_like(gA);
 
-  for (int i = 0; i < N; i++) {
-    gemm3(out1, a, b, c, alpha, beta);
-    checkCudaErrors(cudaDeviceSynchronize());
-  }
-
-  // TODO floating point error is significant - resolve with FMA
-  cout << "pass: " << allclose(out1, out, (float)5e-3) << endl;
-
-  Tensor<float, 2> d = (out - out1);
-  cout << "max: " << d.max() << endl;
-  auto i = d.argmax();
-  cout << i[0] << ", " << i[1] << endl;
-
-  cout << "min: " << d.min() << endl;
-  i = d.argmin();
-  cout << i[0] << ", " << i[1] << endl;
+  using CopyAtom =
 }

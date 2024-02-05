@@ -26,7 +26,7 @@ clean:
 	$(RM) *.o *.ptx *~ $(MAIN)
 
 format:
-	find csrc -type f | xargs clang-format -i
+	find csrc -type f | xargs clang-format -i --style=LLVM
 
 depend: $(CU_SRCS)
 	$(NVCC) -M $(INCLUDES) $(CU_SRCS) >> ./Makefile.dep
